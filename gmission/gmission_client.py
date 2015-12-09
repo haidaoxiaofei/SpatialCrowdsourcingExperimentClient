@@ -15,9 +15,11 @@ CAMPAIGN_USER_ROLE_PARTICIPANT = 2
 HIT_TYPE_TEXT = 'text'
 HIT_TYPE_IMAGE = 'image'
 HIT_TYPE_URL = 'url'
+HIT_TYPE_SELECTION = 'selection'
 
 ANSWER_TYPE_TEXT = 'text'
 ANSWER_TYPE_IMAGE = 'image'
+ANSWER_TYPE_SELECTION = 'selection'
 
 
 class GmissionClient(object):
@@ -88,14 +90,18 @@ class GmissionClient(object):
         response = get(self.api_host + 'rest/location', token=self.token)
         return response['objects']
 
-    def create_hit(self, type, brief, attachment_id, campaign_id, credit, required_answer_count, location_id):
+    def create_hit(self, type, title, description, attachment_id, campaign_id, credit, required_answer_count,
+                   location_id, min_selection_count=1, max_selection_count=1):
         response = post(self.api_host + 'rest/hit',
-                        json={'type': type, 'brief': brief, 'attachment_id': attachment_id, 'campaign_id': campaign_id,
-                              'credit': credit, 'required_answer_count': required_answer_count,
-                              'location_id': location_id, 'requester_id': self.user['id']}, token=self.token)
+                        json={'type': type, 'title': title, 'description': description, 'attachment_id': attachment_id,
+                              'campaign_id': campaign_id, 'credit': credit,
+                              'required_answer_count': required_answer_count, 'location_id': location_id,
+                              'requester_id': self.user['id'], 'min_selection_count': min_selection_count,
+                              'max_selection_count': max_selection_count},
+                        token=self.token)
         if response:
             print 'HIT created', response.get('id', 0)
-            return response
+            return response.get('id', 0)
 
     def get_hits(self):
         response = get(self.api_host + 'rest/hit', token=self.token)
@@ -119,3 +125,19 @@ class GmissionClient(object):
     def get_attachments(self):
         response = get(self.api_host + 'rest/attachment', token=self.token)
         return response['objects']
+
+    def create_selection(self, hit_id, brief):
+        response = post(self.api_host + 'rest/selection',
+                        json={'hit_id': hit_id, 'brief': brief},
+                        token=self.token)
+        if response:
+            print 'Selection created', response.get('id', 0)
+            return response.get('id', 0)
+
+    def get_selections(self):
+        response = get(self.api_host + 'rest/selection', token=self.token)
+        return response['objects']
+
+    def get_credit_by_campaign(self, campaign_id):
+        response = get(self.api_host + 'user/credit/campaign/'+str(campaign_id), token=self.token)
+        return response

@@ -16,7 +16,8 @@ def randfloat():
 
 
 if __name__ == '__main__':
-    client = GmissionClient('http://127.0.0.1:8080/')
+    # client = GmissionClient('http://lccpu3.cse.ust.hk/gmission-dev/')
+    client = GmissionClient()
     username = randstr()
     password = randstr()
     email = '%s@%s.com' % (randstr(), randstr())
@@ -33,10 +34,22 @@ if __name__ == '__main__':
     client.assign_user_to_campaign(campaign_id, CAMPAIGN_USER_ROLE_OWNER)  # assign owner role
 
     # create Location
-    location_id = client.create_location('test location ' + randstr(), randfloat(), randfloat(), randfloat()).get('id', 0)
+    location_id = client.create_location('test location ' + randstr(), randfloat(), randfloat(), randfloat()).get('id',
+                                                                                                                  0)
 
     # create HIT
-    hit_id = client.create_hit(HIT_TYPE_TEXT, 'test HIT ' + randstr(), None, campaign_id, 10, 3, location_id)
+    hit_id = client.create_hit(HIT_TYPE_TEXT, 'test HIT ' + randstr(), 'HIT description' + randstr(), None, campaign_id,
+                               10, 3, location_id)
+
+    hit_id = client.create_hit(HIT_TYPE_SELECTION, 'test selection HIT ' + randstr(), 'HIT description' + randstr(), None, campaign_id,
+                               10, 3, location_id, 1, 1)
+    # create Selection HIT
+    selection = client.create_selection(hit_id, 'selection ' + randstr())
+    selection = client.create_selection(hit_id, 'selection ' + randstr())
+    selection = client.create_selection(hit_id, 'selection ' + randstr())
+    selection = client.create_selection(hit_id, 'selection ' + randstr())
+
+
 
     # get campaign list
     campaigns = client.get_campaigns()
@@ -56,7 +69,12 @@ if __name__ == '__main__':
                         break
                 if not answered:
                     # create a random text answer
-                    client.create_answer(hit['id'], 'test answer ' + randstr(), None, ANSWER_TYPE_TEXT, location_id)
+                    if hit['type'] == HIT_TYPE_TEXT:
+                        client.create_answer(hit['id'], 'test answer ' + randstr(), None, ANSWER_TYPE_TEXT, location_id)
+                    elif hit['type'] == HIT_TYPE_SELECTION:
+                        selections = [s for s in client.get_selections() if s['hit_id'] == hit['id']]
+                        if len(selections)>0:
+                            client.create_answer(hit['id'], str(random.choice(selections).get('id', 0)), None, ANSWER_TYPE_SELECTION, location_id)
 
     # get my task's answer
     hits = client.get_hits()
@@ -69,4 +87,7 @@ if __name__ == '__main__':
                         if attachment['id'] == answer['attachment_id']:
                             attachment_str = 'with attachment %s' % (client.api_host + attachment['value'])
                             break
-                print 'HIT[%d:%s] answer [%s] %s' % (hit['id'], hit['brief'], answer['brief'], attachment_str)
+                print 'HIT[%d:%s] answer [%s] %s' % (hit['id'], hit['title'], answer['brief'], attachment_str)
+
+    for campaign in campaigns:
+        print campaign['id'], client.get_credit_by_campaign(campaign['id'])['credit']
