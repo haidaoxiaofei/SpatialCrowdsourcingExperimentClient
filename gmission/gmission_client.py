@@ -33,6 +33,7 @@ class GmissionClient(object):
                         token=self.token)
         if 'token' in response:
             self.token = response['token']
+            self.user = response
             print 'User auth token', self.token
 
     def user_register(self, username, password, email):
@@ -45,8 +46,8 @@ class GmissionClient(object):
     def user_verify_email(self, hash_id):
         get(self.api_host + 'user/email_verify/' + hash_id)
 
-    def create_campaign(self, title):
-        response = post(self.api_host + 'rest/campaign', json={'title': title}, token=self.token)
+    def create_campaign(self, title, desp=""):
+        response = post(self.api_host + 'rest/campaign', json={'title': title, 'brief':desp}, token=self.token)
         if 'id' in response:
             print 'Campaign created id', response.get('id', 0)
             return response
@@ -58,7 +59,7 @@ class GmissionClient(object):
                         json={'user_id': self.user['id'], 'campaign_id': campaign_id, 'role_id': role_id},
                         token=self.token)
         if 'id' in response:
-            print 'Assign user to campaign id', response.get('id', 0)
+            print 'Assigned user(%d) to campaign(%d)'%(self.user['id'], campaign_id)
             return response
 
     def get_campaigns(self, open_only=False):
@@ -91,7 +92,7 @@ class GmissionClient(object):
         return response['objects']
 
     def create_hit(self, type, title, description, attachment_id, campaign_id, credit, required_answer_count,
-                   location_id, min_selection_count=1, max_selection_count=1):
+                   location_id=1, min_selection_count=1, max_selection_count=1):
         response = post(self.api_host + 'rest/hit',
                         json={'type': type, 'title': title, 'description': description, 'attachment_id': attachment_id,
                               'campaign_id': campaign_id, 'credit': credit,
@@ -101,7 +102,7 @@ class GmissionClient(object):
                         token=self.token)
         if response:
             print 'HIT created', response.get('id', 0)
-            return response.get('id', 0)
+            return response
 
     def get_hits(self):
         response = get(self.api_host + 'rest/hit', token=self.token)

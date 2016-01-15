@@ -8,7 +8,7 @@ def get(url, token=None, params=None):
     headers = {}
     if token:
         headers['Authorization'] = 'gMission ' + token
-    response = requests.get(url, params, headers=headers)
+    response = requests.get(url, params=params, headers=headers)
     if response.status_code == requests.codes.ok:
         return response.json()
     else:
@@ -20,6 +20,7 @@ def post(url, data=None, json=None, token = None):
     if token:
         headers['Authorization'] = 'gMission ' + token
     headers['Content-Type'] = 'application/json'
+    print json
     response = requests.post(url,data=data, json=json, headers=headers)
     if response.status_code == requests.codes.ok or response.status_code == requests.codes.created:
         return response.json()
