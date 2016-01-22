@@ -4,7 +4,7 @@ import json
 
 __author__ = 'rui'
 from datetime import datetime
-from http_client import get, post
+from http_client import get, post, post_image
 from logbook import Logger
 
 API_HOST = 'http://127.0.0.1:8080/'
@@ -126,6 +126,11 @@ class GmissionClient(object):
     def get_attachments(self):
         response = get(self.api_host + 'rest/attachment', token=self.token)
         return response['objects']
+
+    def new_attchment_with_image(self, image_fname):
+        name_from_server = post_image(self.api_host+'image/upload', files={'file':file(image_fname, 'rb')}, token=self.token)["filename"]
+        resp = post(self.api_host + 'rest/attachment', json={'type': 'image', 'value':name_from_server}, token=self.token)
+        print resp
 
     def create_selection(self, hit_id, brief):
         response = post(self.api_host + 'rest/selection',
