@@ -131,6 +131,7 @@ class GmissionClient(object):
         name_from_server = post_image(self.api_host+'image/upload', files={'file':file(image_fname, 'rb')}, token=self.token)["filename"]
         resp = post(self.api_host + 'rest/attachment', json={'type': 'image', 'value':name_from_server}, token=self.token)
         print resp
+        return resp
 
     def create_selection(self, hit_id, brief):
         response = post(self.api_host + 'rest/selection',
