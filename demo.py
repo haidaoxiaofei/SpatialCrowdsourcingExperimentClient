@@ -43,6 +43,7 @@ if __name__ == '__main__':
 
     hit_id = client.create_hit(HIT_TYPE_SELECTION, 'test selection HIT ' + randstr(), 'HIT description' + randstr(), None, campaign_id,
                                10, 3, location_id, 1, 1)
+    hit_id = hit_id['id']
     # create Selection HIT
     selection = client.create_selection(hit_id, 'selection ' + randstr())
     selection = client.create_selection(hit_id, 'selection ' + randstr())
