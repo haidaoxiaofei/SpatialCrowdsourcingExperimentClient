@@ -1,1 +1,2 @@
-a simple gmission client demo in python.
+# gmission_experiment_client
+python client to run assignment experiments on gmission
