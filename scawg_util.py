@@ -1,5 +1,6 @@
 import subprocess
 from os import listdir
+from shutil import rmtree
 
 __author__ = 'Jian Xun'
 
@@ -63,6 +64,7 @@ class Task:
 
 
 def run_jar(params):
+    print 'run params', str(params)
     subprocess.call(['java', '-jar', './GeocrowdDataGenerator.jar'] + params)
 
 
@@ -99,16 +101,12 @@ def parse_line(line):
 
 
 def generate_instance(options=[]):
-    run_jar(['new_instance'] + options)
-    global __initial__
-    __initial__ = True
+    run_jar(options)
 
 
-def generate_general_task_and_worker():
-    global __initial__
-    if not __initial__:
-        generate_instance()
-    run_jar(['general'])
+def generate_general_task_and_worker(options=[]):
+    clear_dir()
+    run_jar(['general'] + options)
     files = listdir('./dataset/uni/task')
     tasks = []
     for name in files:
@@ -132,6 +130,15 @@ def generate_general_task_and_worker():
         file.close()
         workers.append(temp)
     return tasks, workers
+
+
+def clear_dir():
+    files = listdir('./dataset')
+    if 'uni' in files:
+        rmtree('./dataset/uni')
+    files = listdir('./res')
+    if 'dataset' in files:
+        rmtree('./res/dataset')
 
 
 if __name__ == '__main__':

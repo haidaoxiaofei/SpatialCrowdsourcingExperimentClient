@@ -3,7 +3,7 @@ import math
 import scawg_util
 import virtual_user
 import datetime
-from models import UserLastPosition, WorkerDetail, HitDetail, session, Message
+from models import User, UserLastPosition, WorkerDetail, HitDetail, session, Message
 import encoder
 
 __author__ = 'Jian Xun'
@@ -77,6 +77,16 @@ class DBUtil:
 
     @classmethod
     def initialize_db(cls):
+        user_num = session.query(User).count()
+        if user_num < 10000:
+            for i in xrange(user_num + 1, 10001):
+                u = User()
+                u.email = 'jianxuntest_' + str(i) + '@test.com'
+                u.username = 'jianxuntest_' + str(i)
+                u.password = '$6$rounds=625784$CWH2/L8e8Oswa6Ce$D6dTtMNbX8QI0Ff37IJy/SA0wszAweLxoEeq502gYmb2Fo9eRlCuQQsfmKzNBRmPkulik0.YjttczfRRjsTlh/'
+                u.credit = 0
+                u.active = 1
+                session.add(u)
         session.query(WorkerDetail).update(values={WorkerDetail.is_online: False})
         session.query(HitDetail).update(values={HitDetail.is_valid: False})
         session.commit()
@@ -143,7 +153,7 @@ class Measure:
 
 
 # worker id is from 1 to 1000
-total_worker_num = 1000
+total_worker_num = 10000
 # maps scawg id to gmission id (the same as index of vworkers)
 worker_dic = {}
 worker_used = 0
@@ -197,7 +207,33 @@ def invalid_tasks_batch(tasks):
     for task in tasks:
         DBUtil.set_hit_attributes(hid=task.id, is_valid=False)
 
-def run_exp(instance_num):
+
+def run_exp(distribution, instance_num=4, worker_per_instance=25, task_per_instance=25, task_duration=(4, 8),
+            task_requirement=(5, 7), task_confidence=(0.85, 0.9), worker_capacity=(5, 7),
+            worker_reliability=(0.75, 0.8), working_side_length=(0.15, 0.2)):
+    """
+    run experiment and return the result
+    Parameters
+    ----------
+    distribution : str
+    instance_num : int
+    worker_per_instance : int
+    task_per_instance : int
+    task_duration : tuple
+    task_requirement : tuple
+    task_confidence : tuple
+    worker_capacity : tuple
+    worker_reliability : tuple
+    working_side_length : tuple
+
+    Returns
+    -------
+
+    """
+    DBUtil.initialize_db()
+    DBUtil.clear_message()
+    print 'db initialized'
+
     # initial boss
     boss = virtual_user.Boss('jianxuntest_boss', 'PaSSwoRd', 'jianxuntest_boss@test.com')
 
@@ -210,66 +246,112 @@ def run_exp(instance_num):
         'geocrowdnnp': Measure(),
         'geotrucrowdgreedy': Measure(),
         'geotrucrowdlo': Measure(),
-        #'rdbscdivideandconquer': Measure(),
-        #'rdbscsampling': Measure()
+        'rdbscdivideandconquer': Measure(),
+        'rdbscsampling': Measure()
     }
 
-    DBUtil.initialize_db()
-    DBUtil.clear_message()
-    print 'db initialized'
-
-    scawg_util.generate_instance(['instance=' + str(instance_num)])
-    tasks, workers = scawg_util.generate_general_task_and_worker()
+    tasks, workers = scawg_util.generate_general_task_and_worker([
+        distribution,
+        'general',
+        'instance=' + str(instance_num),
+        'worker_num_per_instance=' + str(worker_per_instance),
+        'task_num_per_instance=' + str(task_per_instance),
+        'min_task_duration=' + str(task_duration[0]),
+        'max_task_duration=' + str(task_duration[1]),
+        'min_task_requirement=' + str(task_requirement[0]),
+        'max_task_requirement=' + str(task_requirement[1]),
+        'min_task_confidence=' + str(task_confidence[0]),
+        'max_task_confidence=' + str(task_confidence[1]),
+        'min_worker_capacity=' + str(worker_capacity[0]),
+        'max_worker_capacity=' + str(worker_capacity[1]),
+        'min_worker_reliability=' + str(worker_reliability[0]),
+        'max_worker_reliability=' + str(worker_reliability[1]),
+        'min_working_side_length=' + str(working_side_length[0]),
+        'max_working_side_length=' + str(working_side_length[1])
+    ])
     print 'data generated'
 
     # test on each method in result
     for method in result:
         print method
         for i in xrange(instance_num):
-            print 'instance ', i
             worker_ins = workers[i]
             task_ins = tasks[i]
             set_worker_attributes_batch(worker_ins)
-            print 'workers done'
             set_task_attributes_batch(task_ins, boss)
-            print 'tasks done'
 
             assign = encoder.encode(boss.assign(method, i))['result']
             # print isinstance(assign, list), isinstance(assign, dict), isinstance(assign, str)
             # print assign
             result[method].add_result(assign, task_ins, worker_ins)
-            print 'offline workers'
             offline_workers_batch(worker_ins)
-        print 'clean tasks'
         for i in xrange(instance_num):
             invalid_tasks_batch(tasks[i])
         DBUtil.clear_message()
 
     return result
 
-if __name__ == '__main__':
-    results = {}
-    instances = [2, 5, 10, 20]#, 50, 100]
+
+def run_on_variable(distribution, variable_name, values):
     measures = []
-    for ins in instances:
-        temp = run_exp(ins)
+    for value in values:
+        temp = eval('run_exp(\'' + distribution + '\', ' + variable_name + '=' + str(value) + ')')
         for method in temp:
             if method not in results:
                 results[method] = {}
-            results[method][str(ins)] = temp[method].report()
+            results[method][str(value)] = temp[method].report()
             if len(measures) == 0:
-                measures = [x for x in results[method][str(ins)]]
+                measures = [x for x in results[method][str(value)]]
 
-    ofile = open('report.csv', 'w')
+    ofile = open(distribution + '_' + variable_name + '.csv', 'w')
     for measure in measures:
         ofile.write(measure + '\n')
         ofile.write('method')
-        for ins in instances:
-            ofile.write(',' + str(ins * 200))
+        for value in values:
+            ofile.write(',' + str(value))
         ofile.write('\n')
         for method in results:
             ofile.write(method)
-            for ins in instances:
-                ofile.write(',' + str(results[method][str(ins)][measure]))
+            for value in values:
+                ofile.write(',' + str(results[method][str(value)][measure]))
             ofile.write('\n')
     ofile.close()
+
+if __name__ == '__main__':
+    results = {}
+    distribution = ['unif', 'gaus']  # , 'skew', 'zipf']
+    worker_per_instance = [25, 50]  # ,125, 200, 250]
+    task_per_instance = [25, 50]  # ,125, 200, 250]
+    task_duration = [(1, 2), (2, 4), (4, 8), (8, 12), (12, 16)]
+    task_requirement = [(1, 3), (3, 5), (5, 7), (7, 9)]
+    task_confidence = [(0.75, 0.8), (0.8, 0.85), (0.85, 0.9), (0.9, 0.95)]
+    worker_capacity = [(1, 3), (3, 5), (5, 7), (7, 9)]
+    worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8), (0.8, 0.85)]
+    working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2), (0.2, 0.25)]
+    measures = []
+    for dist in distribution:
+        run_on_variable(dist, 'worker_per_instance', worker_per_instance)
+        """
+        for w_num_per_ins in worker_per_instance:
+            temp = run_exp(dist, worker_per_instance=w_num_per_ins)
+            for method in temp:
+                if method not in results:
+                    results[method] = {}
+                results[method][str(ins)] = temp[method].report()
+                if len(measures) == 0:
+                    measures = [x for x in results[method][str(ins)]]
+
+        ofile = open('report.csv', 'w')
+        for measure in measures:
+            ofile.write(measure + '\n')
+            ofile.write('method')
+            for ins in instances:
+                ofile.write(',' + str(ins * 200))
+            ofile.write('\n')
+            for method in results:
+                ofile.write(method)
+                for ins in instances:
+                    ofile.write(',' + str(results[method][str(ins)][measure]))
+                ofile.write('\n')
+        ofile.close()
+        """
