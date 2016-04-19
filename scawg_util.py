@@ -1,6 +1,7 @@
 import subprocess
 from os import listdir
 from shutil import rmtree
+from math import log
 
 __author__ = 'Jian Xun'
 
@@ -129,7 +130,35 @@ def generate_general_task_and_worker(options=[]):
             temp.append(worker)
         file.close()
         workers.append(temp)
+    compute_entropy(tasks, workers)
     return tasks, workers
+
+
+def compute_entropy(tasks, workers):
+    for t_ins in xrange(len(tasks)):
+        for task in tasks[t_ins]:
+            # calculate entropy for this task
+            total_num = 0.0
+            distinct = {}
+            for w_ins in xrange(t_ins + 1):
+                for worker in workers[w_ins]:
+                    dis_lon = worker.longitude - task.longitude if worker.longitude > task.longitude\
+                        else task.longitude - worker.longitude
+                    dis_lat = worker.latitude - task.latitude if worker.latitude > task.latitude\
+                        else task.latitude - worker.latitude
+                    if dis_lon <= 0.1 and dis_lat < 0.1:
+                        w_id = str(worker.id)
+                        if w_id in distinct:
+                            distinct[w_id] += 1
+                        else:
+                            distinct[w_id] = 1
+                        total_num += 1
+            entropy = 0.0
+            for w_id in distinct:
+                pl = distinct[w_id] / total_num
+                entropy -= pl * log(pl)
+            task.entropy = entropy
+            print 'entropy is', entropy
 
 
 def clear_dir():

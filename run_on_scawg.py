@@ -319,7 +319,7 @@ def run_on_variable(distribution, variable_name, values):
 
 if __name__ == '__main__':
     results = {}
-    distribution = ['unif', 'gaus']  # , 'skew', 'zipf']
+    distribution = ['unif']#, 'gaus']  # , 'skew', 'zipf']
     worker_per_instance = [25, 50]  # ,125, 200, 250]
     task_per_instance = [25, 50]  # ,125, 200, 250]
     task_duration = [(1, 2), (2, 4), (4, 8), (8, 12), (12, 16)]
