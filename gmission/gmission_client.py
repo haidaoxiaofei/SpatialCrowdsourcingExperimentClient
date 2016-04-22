@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # encoding: utf-8
 import json
+import platform
 
 __author__ = 'rui'
-from datetime import datetime
-from http_client import get, post, put,  post_image
-from logbook import Logger
+from http_client import get, post, post_image
 
-API_HOST = 'http://192.168.99.100:9091/'
+sysstr = platform.system()
+API_HOST = 'http://127.0.0.1:9091/'
+if sysstr == 'Darwin':
+    API_HOST = 'http://192.168.99.100:9091/'
 
 CAMPAIGN_USER_ROLE_OWNER = 1
 CAMPAIGN_USER_ROLE_PARTICIPANT = 2
