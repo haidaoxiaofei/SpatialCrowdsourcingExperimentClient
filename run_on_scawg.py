@@ -208,7 +208,7 @@ def invalid_tasks_batch(tasks):
         DBUtil.set_hit_attributes(hid=task.id, is_valid=False)
 
 
-def run_exp(distribution, instance_num=4, worker_per_instance=25, task_per_instance=25, task_duration=(4, 8),
+def run_exp(distribution, instance_num=40, worker_per_instance=25, task_per_instance=25, task_duration=(4, 8),
             task_requirement=(5, 7), task_confidence=(0.85, 0.9), worker_capacity=(5, 7),
             worker_reliability=(0.75, 0.8), working_side_length=(0.15, 0.2)):
     """
@@ -319,9 +319,9 @@ def run_on_variable(distribution, variable_name, values):
 
 if __name__ == '__main__':
     results = {}
-    distribution = ['unif']#, 'gaus']  # , 'skew', 'zipf']
-    worker_per_instance = [25, 50]  # ,125, 200, 250]
-    task_per_instance = [25, 50]  # ,125, 200, 250]
+    distribution = ['unif', 'gaus', 'skew', 'zipf', 'real']
+    worker_per_instance = [25, 50, 125, 200, 250]
+    task_per_instance = [25, 50, 125, 200, 250]
     task_duration = [(1, 2), (2, 4), (4, 8), (8, 12), (12, 16)]
     task_requirement = [(1, 3), (3, 5), (5, 7), (7, 9)]
     task_confidence = [(0.75, 0.8), (0.8, 0.85), (0.85, 0.9), (0.9, 0.95)]
@@ -330,28 +330,12 @@ if __name__ == '__main__':
     working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2), (0.2, 0.25)]
     measures = []
     for dist in distribution:
-        run_on_variable(dist, 'worker_per_instance', worker_per_instance)
-        """
-        for w_num_per_ins in worker_per_instance:
-            temp = run_exp(dist, worker_per_instance=w_num_per_ins)
-            for method in temp:
-                if method not in results:
-                    results[method] = {}
-                results[method][str(ins)] = temp[method].report()
-                if len(measures) == 0:
-                    measures = [x for x in results[method][str(ins)]]
-
-        ofile = open('report.csv', 'w')
-        for measure in measures:
-            ofile.write(measure + '\n')
-            ofile.write('method')
-            for ins in instances:
-                ofile.write(',' + str(ins * 200))
-            ofile.write('\n')
-            for method in results:
-                ofile.write(method)
-                for ins in instances:
-                    ofile.write(',' + str(results[method][str(ins)][measure]))
-                ofile.write('\n')
-        ofile.close()
-        """
+        if dist != 'real':
+            run_on_variable(dist, 'worker_per_instance', worker_per_instance)
+        run_on_variable(dist, 'task_per_instance', task_per_instance)
+        run_on_variable(dist, 'task_duration', task_duration)
+        run_on_variable(dist, 'task_requirement', task_requirement)
+        run_on_variable(dist, 'task_confidence', task_confidence)
+        run_on_variable(dist, 'worker_capacity', worker_capacity)
+        run_on_variable(dist, 'worker_reliability', worker_reliability)
+        run_on_variable(dist, 'working_side_length', working_side_length)

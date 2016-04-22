@@ -108,22 +108,25 @@ def generate_instance(options=[]):
 def generate_general_task_and_worker(options=[]):
     clear_dir()
     run_jar(['general'] + options)
-    files = listdir('./dataset/uni/task')
+    dirct = 'uni'
+    if 'real' in options:
+        dirct = 'real'
+    files = listdir('./dataset/' + dirct + '/task')
     tasks = []
     for name in files:
         temp = []
-        file = open('./dataset/uni/task/' + name, 'r')
+        file = open('./dataset/' + dirct + '/task/' + name, 'r')
         for line in file:
             task = Task()
             task.from_general(parse_line(line))
             temp.append(task)
         file.close()
         tasks.append(temp)
-    files = listdir('./dataset/uni/worker')
+    files = listdir('./dataset/' + dirct + '/worker')
     workers = []
     for name in files:
         temp = []
-        file = open('./dataset/uni/worker/' + name, 'r')
+        file = open('./dataset/' + dirct + '/worker/' + name, 'r')
         for line in file:
             worker = Worker()
             worker.from_general(parse_line(line))
@@ -158,7 +161,7 @@ def compute_entropy(tasks, workers):
                 pl = distinct[w_id] / total_num
                 entropy -= pl * log(pl)
             task.entropy = entropy
-            print 'entropy is', entropy
+            # print 'entropy is', entropy
 
 
 def clear_dir():
