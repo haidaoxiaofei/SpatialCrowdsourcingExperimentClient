@@ -109,13 +109,17 @@ def generate_general_task_and_worker(options=[]):
     clear_dir()
     run_jar(['general'] + options)
     dirct = 'uni'
+    prefix_task = 'uni_tasks'
+    prefix_worker = 'uni_workers'
     if 'real' in options:
         dirct = 'real'
+        prefix_task = 'tasks'
+        prefix_worker = 'workers'
     files = listdir('./dataset/' + dirct + '/task')
     tasks = []
-    for name in files:
+    for i in xrange(40):
         temp = []
-        file = open('./dataset/' + dirct + '/task/' + name, 'r')
+        file = open('./dataset/' + dirct + '/task/' + prefix_task + str(i) + '.txt', 'r')
         for line in file:
             task = Task()
             task.from_general(parse_line(line))
@@ -124,9 +128,9 @@ def generate_general_task_and_worker(options=[]):
         tasks.append(temp)
     files = listdir('./dataset/' + dirct + '/worker')
     workers = []
-    for name in files:
+    for i in xrange(40):
         temp = []
-        file = open('./dataset/' + dirct + '/worker/' + name, 'r')
+        file = open('./dataset/' + dirct + '/worker/' + prefix_worker + str(i) + '.txt', 'r')
         for line in file:
             worker = Worker()
             worker.from_general(parse_line(line))

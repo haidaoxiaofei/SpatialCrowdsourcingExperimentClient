@@ -18,12 +18,12 @@ def read_file(file_path):
                 'distribution': dist,
                 'y_label': line,
                 'x_label': variable,
-                'x_series': infile.readline().split(',')[1:],
+                'x_series': infile.readline().split('\t')[1:],
                 'lines': {}
             }
             line = infile.readline().strip()
-            while ',' in line:
-                sp = line.split(',')
+            while '\t' in line:
+                sp = line.split('\t')
                 data['lines'][sp[0]] = sp[1:]
                 line = infile.readline().strip()
             datas.append(data)

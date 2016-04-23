@@ -1,5 +1,4 @@
 import math
-
 import scawg_util
 import virtual_user
 import datetime
@@ -308,12 +307,12 @@ def run_on_variable(distribution, variable_name, values):
         ofile.write(measure + '\n')
         ofile.write('method')
         for value in values:
-            ofile.write(',' + str(value))
+            ofile.write('\t' + str(value))
         ofile.write('\n')
         for method in results:
             ofile.write(method)
             for value in values:
-                ofile.write(',' + str(results[method][str(value)][measure]))
+                ofile.write('\t' + str(results[method][str(value)][measure]))
             ofile.write('\n')
     ofile.close()
 
