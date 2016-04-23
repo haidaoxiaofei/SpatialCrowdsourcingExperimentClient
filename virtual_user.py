@@ -131,4 +131,4 @@ class Boss:
         current_time : int
             Current time instance, 0 means 1970-01-01 08:00:00
         """
-        return post(self.__client.api_host + 'assignment', json={'method': method, 'time': current_time + 28800})
+        return post(self.__client.api_host + 'assignment', json={'method': method, 'time': current_time})
