@@ -111,13 +111,17 @@ def generate_general_task_and_worker(options=[]):
     dirct = 'uni'
     prefix_task = 'uni_tasks'
     prefix_worker = 'uni_workers'
+    instance = 20
+    for option in options:
+        if option.startswith('instance='):
+            instance = int(option[9:])
     if 'real' in options:
         dirct = 'real'
         prefix_task = 'tasks'
         prefix_worker = 'workers'
     files = listdir('./dataset/' + dirct + '/task')
     tasks = []
-    for i in xrange(40):
+    for i in xrange(instance):
         temp = []
         file = open('./dataset/' + dirct + '/task/' + prefix_task + str(i) + '.txt', 'r')
         for line in file:
@@ -128,7 +132,7 @@ def generate_general_task_and_worker(options=[]):
         tasks.append(temp)
     files = listdir('./dataset/' + dirct + '/worker')
     workers = []
-    for i in xrange(40):
+    for i in xrange(instance):
         temp = []
         file = open('./dataset/' + dirct + '/worker/' + prefix_worker + str(i) + '.txt', 'r')
         for line in file:
