@@ -207,7 +207,7 @@ def invalid_tasks_batch(tasks):
         DBUtil.set_hit_attributes(hid=task.id, is_valid=False)
 
 
-def run_exp(distribution, instance_num=40, worker_per_instance=25, task_per_instance=25, task_duration=(4, 8),
+def run_exp(distribution, instance_num=20, worker_per_instance=25, task_per_instance=25, task_duration=(4, 8),
             task_requirement=(5, 7), task_confidence=(0.85, 0.9), worker_capacity=(5, 7),
             worker_reliability=(0.75, 0.8), working_side_length=(0.15, 0.2)):
     """
