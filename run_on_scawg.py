@@ -4,8 +4,18 @@ import virtual_user
 import datetime
 from models import User, UserLastPosition, WorkerDetail, HitDetail, session, Message
 import encoder
+import sys
 
 __author__ = 'Jian Xun'
+
+output_order = ['geotrucrowdgreedy',
+                'geotrucrowdlo',
+                'geocrowdgreedy',
+                'geocrowdllep',
+                'geocrowdnnp',
+                'rdbscdivideandconquer',
+                'rdbscsampling'
+                ]
 
 
 class DBUtil:
@@ -98,6 +108,7 @@ class Measure:
     task_dic = None
     total_moving_dis = 0
     assigned_workers = None
+    task_worker = None
 
     def __init__(self):
         self.total_assignment = 0
@@ -108,10 +119,13 @@ class Measure:
         self.task_dic = {}
         self.worker_dic = {}
         self.assigned_workers = {}
+        self.task_worker = {}
 
     def add_result(self, assigns, tasks, workers):
         for task in tasks:
-            self.task_dic[str(task.id)] = task
+            tid = str(task.id)
+            self.task_dic[tid] = task
+            self.task_worker[tid] = []
         for worker in workers:
             wid = get_id(worker.id)
             self.worker_dic[str(wid)] = worker
@@ -125,23 +139,35 @@ class Measure:
                 # print assign['workerId'],  wid
                 if wid not in self.assigned_workers:
                     self.assigned_workers[wid] = wid
+                self.task_worker[tid].append(wid)
                 self.task_dic[tid].assigned += 1
                 self.total_moving_dis += Measure.moving_dis(self.task_dic[tid], self.worker_dic[wid])
 
     @staticmethod
+    def satisfy_conf(task, workers):
+        conf = 1.0
+        for worker in workers:
+            conf *= 1 - worker.reliability
+        return 1 - conf >= task.confidence
+
+    @staticmethod
     def moving_dis(task, worker):
-        return math.sqrt((task.longitude - worker.longitude)**2 + (task.latitude - worker.latitude)**2)
+        return math.sqrt((task.longitude - worker.longitude) ** 2 + (task.latitude - worker.latitude) ** 2)
 
     def report(self):
-        finished = 0
+        self.finished = 0
+        finished_conf = 0
         for tid in self.task_dic:
             if self.task_dic[tid].assigned >= self.task_dic[tid].require_answer_count:
-                finished += 1
+                self.finished += 1
+                if Measure.satisfy_conf(self.task_dic[tid], [self.worker_dic[wid] for wid in self.task_worker[tid]]):
+                    finished_conf += 1
         return {
             'task_num': len(self.task_dic),
             'worker_num': len(self.worker_dic),
             'assigned_worker_num': len(self.assigned_workers),
-            'finished_task_num': finished,
+            'finished_task_num': self.finished,
+            'finished_task_num_conf': finished_conf,
             'average_moving_dis':
                 0 if len(self.assigned_workers) == 0 else self.total_moving_dis / len(self.assigned_workers),
             'average_workload':
@@ -239,15 +265,9 @@ def run_exp(distribution, instance_num=20, worker_per_instance=25, task_per_inst
     # instance_num = 2
 
     # statistics including number of assigned(finished) tasks, average moving distance, average workload, running time
-    result = {
-        'geocrowdgreedy': Measure(),
-        'geocrowdllep': Measure(),
-        'geocrowdnnp': Measure(),
-        'geotrucrowdgreedy': Measure(),
-        'geotrucrowdlo': Measure(),
-        'rdbscdivideandconquer': Measure(),
-        'rdbscsampling': Measure()
-    }
+    result = {}
+    for method in output_order:
+        result[method] = Measure()
 
     tasks, workers = scawg_util.generate_general_task_and_worker([
         distribution,
@@ -293,6 +313,7 @@ def run_exp(distribution, instance_num=20, worker_per_instance=25, task_per_inst
 
 def run_on_variable(distribution, variable_name, values):
     measures = []
+    results = {}
     for value in values:
         temp = eval('run_exp(\'' + distribution + '\', ' + variable_name + '=' + str(value) + ')')
         for method in temp:
@@ -309,15 +330,27 @@ def run_on_variable(distribution, variable_name, values):
         for value in values:
             ofile.write('\t' + str(value))
         ofile.write('\n')
-        for method in results:
+        for method in output_order:
             ofile.write(method)
             for value in values:
                 ofile.write('\t' + str(results[method][str(value)][measure]))
             ofile.write('\n')
     ofile.close()
 
+
+def test():
+    global output_order
+    output_order = ['geotrucrowdgreedy',
+                    'geocrowdgreedy',
+                    'rdbscdivideandconquer']
+    run_on_variable('gaus', 'worker_per_instance', [25, 50])
+
 if __name__ == '__main__':
-    results = {}
+    if len(sys.argv) > 1:
+        arg = sys.argv[1]
+        if arg == 'test':
+            test()
+            exit()
     distribution = ['unif', 'gaus', 'skew', 'zipf', 'real']
     worker_per_instance = [25, 50, 125, 200, 250]
     task_per_instance = [25, 50, 125, 200, 250]
