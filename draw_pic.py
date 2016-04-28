@@ -12,6 +12,7 @@ LABEL = {
     'geocrowdllep': 'G-llep',
     'geotrucrowdgreedy': 'GT-greedy',
     'geotrucrowdlo': 'GT-lo',
+    'geotrucrowdhgr': 'GT-HGR',
     'rdbscsampling': 'RDB-sam',
     'rdbscdivideandconquer': 'RDB-d&c'
 }
@@ -92,7 +93,8 @@ def draw(data, suffix):
         mkdir('./pics')
     savefig('./pics/' + data['distribution'] + '_' + data['x_label'] + '_' + data['y_label'] + '.' + suffix)
 
-if __name__ == '__main__':
+
+def main():
     files = listdir('.')
     for file_name in files:
         if '.csv' in file_name:
@@ -100,3 +102,6 @@ if __name__ == '__main__':
             for data in datas:
                 if data['y_label'] != 'worker_num' and data['y_label'] != 'task_num':
                     draw(data, 'eps')
+
+if __name__ == '__main__':
+    main()

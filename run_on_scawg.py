@@ -5,11 +5,12 @@ import datetime
 from models import User, UserLastPosition, WorkerDetail, HitDetail, session, Message
 import encoder
 import sys
+import draw_pic
 
 __author__ = 'Jian Xun'
 
 output_order = ['geotrucrowdgreedy',
-                'geotrucrowdlo',
+                'geotrucrowdhgr',
                 'geocrowdgreedy',
                 'geocrowdllep',
                 'geocrowdnnp',
@@ -106,14 +107,15 @@ class Measure:
     running_time = None
     worker_dic = None
     task_dic = None
-    total_moving_dis = 0
+    total_moving_dis = None
     assigned_workers = None
     task_worker = None
+    finished = None
 
     def __init__(self):
         self.total_assignment = 0
         self.finished = 0
-        self.average_moving_dis = 0
+        self.total_moving_dis = 0
         self.average_workload = 0
         self.running_time = 0
         self.task_dic = {}
@@ -139,16 +141,28 @@ class Measure:
                 # print assign['workerId'],  wid
                 if wid not in self.assigned_workers:
                     self.assigned_workers[wid] = wid
+                if wid in self.task_worker[tid]:
+                    print '!!!!!!! duplicate assignment !!!!!!!'
                 self.task_worker[tid].append(wid)
                 self.task_dic[tid].assigned += 1
                 self.total_moving_dis += Measure.moving_dis(self.task_dic[tid], self.worker_dic[wid])
 
     @staticmethod
+    def ars(workers, level, confidence, neg_count, target):
+        if level == len(workers):
+            return confidence
+        # assume this worker gives a negative answer
+        answer = Measure.ars(workers, level + 1, confidence * workers[level].reliability, neg_count, target)
+        if answer > target:
+            return 1
+        # assume this worker gives a positive answer
+        if neg_count < (len(workers) - 1) / 2:
+            answer += Measure.ars(workers, level + 1, confidence * (1 - workers[level].reliability), neg_count + 1, target)
+        return answer
+
+    @staticmethod
     def satisfy_conf(task, workers):
-        conf = 1.0
-        for worker in workers:
-            conf *= 1 - worker.reliability
-        return 1 - conf >= task.confidence
+        return Measure.ars(workers, 0, 1, 0, task.confidence) >= task.confidence
 
     @staticmethod
     def moving_dis(task, worker):
@@ -160,18 +174,18 @@ class Measure:
         for tid in self.task_dic:
             if self.task_dic[tid].assigned >= self.task_dic[tid].require_answer_count:
                 self.finished += 1
-                if Measure.satisfy_conf(self.task_dic[tid], [self.worker_dic[wid] for wid in self.task_worker[tid]]):
-                    finished_conf += 1
+                # if Measure.satisfy_conf(self.task_dic[tid], [self.worker_dic[wid] for wid in self.task_worker[tid]]):
+                #     finished_conf += 1
         return {
             'task_num': len(self.task_dic),
             'worker_num': len(self.worker_dic),
             'assigned_worker_num': len(self.assigned_workers),
             'finished_task_num': self.finished,
-            'finished_task_num_conf': finished_conf,
+            # 'finished_task_num_conf': finished_conf,
             'average_moving_dis':
                 0 if len(self.assigned_workers) == 0 else self.total_moving_dis / len(self.assigned_workers),
             'average_workload':
-                0 if len(self.assigned_workers) == 0 else self.total_assignment / len(self.assigned_workers),
+                0 if len(self.assigned_workers) == 0 else (self.total_assignment + 0.0) / len(self.assigned_workers),
             'total_assignment': self.total_assignment,
             'running_time': self.running_time / 1000.0
         }
@@ -233,7 +247,8 @@ def invalid_tasks_batch(tasks):
         DBUtil.set_hit_attributes(hid=task.id, is_valid=False)
 
 
-def run_exp(distribution, instance_num=20, worker_per_instance=25, task_per_instance=25, task_duration=(4, 8),
+# todo set default values
+def run_exp(distribution, instance_num=5, worker_per_instance=50, task_per_instance=50, task_duration=(4, 8),
             task_requirement=(5, 7), task_confidence=(0.85, 0.9), worker_capacity=(5, 7),
             worker_reliability=(0.75, 0.8), working_side_length=(0.15, 0.2)):
     """
@@ -341,25 +356,32 @@ def run_on_variable(distribution, variable_name, values):
 def test():
     global output_order
     output_order = ['geotrucrowdgreedy',
+                    'geotrucrowdhgr',
                     'geocrowdgreedy',
-                    'rdbscdivideandconquer']
-    run_on_variable('gaus', 'worker_per_instance', [25, 50])
+                    'geocrowdllep',
+                    'geocrowdnnp',
+                    'rdbscdivideandconquer',
+                    'rdbscsampling'
+                    ]
+    # worker should be at least 2 times more than task
+    run_on_variable('gaus', 'worker_per_instance', [300, 400, 500])
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         arg = sys.argv[1]
         if arg == 'test':
             test()
+            draw_pic.main()
             exit()
-    distribution = ['unif', 'gaus', 'skew', 'zipf', 'real']
-    worker_per_instance = [25, 50, 125, 200, 250]
-    task_per_instance = [25, 50, 125, 200, 250]
-    task_duration = [(1, 2), (2, 4), (4, 8), (8, 12), (12, 16)]
+    distribution = ['unif', 'gaus']#, 'skew', 'zipf', 'real']
+    worker_per_instance = [100, 200, 500, 1000]#[200, 400, 1000, 1600, 2000]#[25, 50, 125, 200, 250]
+    task_per_instance = [100, 200, 500, 1000]#[200, 400, 1000, 1600, 2000]#[25, 50, 125, 200, 250]
+    task_duration = [(1, 2), (2, 4), (4, 8)]#, (8, 12), (12, 16)]
     task_requirement = [(1, 3), (3, 5), (5, 7), (7, 9)]
-    task_confidence = [(0.75, 0.8), (0.8, 0.85), (0.85, 0.9), (0.9, 0.95)]
-    worker_capacity = [(1, 3), (3, 5), (5, 7), (7, 9)]
-    worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8), (0.8, 0.85)]
-    working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2), (0.2, 0.25)]
+    task_confidence = [(0.75, 0.8), (0.8, 0.85), (0.85, 0.9)]#, (0.9, 0.95)]
+    worker_capacity = [(1, 3), (3, 5), (5, 7)]#, (7, 9)]
+    worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8)]#, (0.8, 0.85)]
+    working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2)]#, (0.2, 0.25)]
     measures = []
     for dist in distribution:
         if dist != 'real':

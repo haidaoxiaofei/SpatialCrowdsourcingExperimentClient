@@ -35,11 +35,10 @@ class Worker:
         self.capacity = params[3]
         self.activeness = params[4]
         # only use one parameter to generate a square region
-        dis = params[5][0]
-        self.max_lat = self.latitude + dis / 2
-        self.max_lon = self.longitude + dis / 2
-        self.min_lat = self.latitude - dis / 2
-        self.min_lon = self.longitude - dis / 2
+        self.min_lat = params[5][0]
+        self.min_lon = params[5][1]
+        self.max_lat = params[5][2]
+        self.max_lon = params[5][3]
         self.reliability = params[6]
 
 
