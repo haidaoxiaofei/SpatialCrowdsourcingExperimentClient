@@ -217,10 +217,11 @@ def set_worker_attributes_batch(workers):
     for worker in workers:
         real_id = get_id(worker.id)
         DBUtil.move_to(real_id, worker.longitude, worker.latitude)
-        DBUtil.set_worker_attributes(uid=real_id, capacity=worker.capacity, reliability=1, min_lon=worker.min_lon,
-                                     min_lat=worker.min_lat, max_lon=worker.max_lon, max_lat=worker.max_lat,
-                                     velocity=worker.velocity, min_direction=worker.min_direction,
-                                     max_direction=worker.max_direction, is_online=True)
+        DBUtil.set_worker_attributes(uid=real_id, capacity=worker.capacity, reliability=worker.reliability,
+                                     min_lon=worker.min_lon, min_lat=worker.min_lat, max_lon=worker.max_lon,
+                                     max_lat=worker.max_lat, velocity=worker.velocity,
+                                     min_direction=worker.min_direction, max_direction=worker.max_direction,
+                                     is_online=True)
 
 
 def offline_workers_batch(workers):
