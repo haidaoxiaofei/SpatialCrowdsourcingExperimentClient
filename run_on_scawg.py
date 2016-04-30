@@ -111,6 +111,7 @@ class Measure:
     assigned_workers = None
     task_worker = None
     finished = None
+    average_workload = None
 
     def __init__(self):
         self.total_assignment = 0
@@ -172,7 +173,7 @@ class Measure:
         self.finished = 0
         finished_conf = 0
         for tid in self.task_dic:
-            if self.task_dic[tid].assigned >= self.task_dic[tid].require_answer_count:
+            if len(self.task_worker[tid]) >= self.task_dic[tid].require_answer_count:
                 self.finished += 1
                 # if Measure.satisfy_conf(self.task_dic[tid], [self.worker_dic[wid] for wid in self.task_worker[tid]]):
                 #     finished_conf += 1
