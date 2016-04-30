@@ -6,17 +6,9 @@ from models import User, UserLastPosition, WorkerDetail, HitDetail, session, Mes
 import encoder
 import sys
 import draw_pic
+import config
 
 __author__ = 'Jian Xun'
-
-output_order = ['geotrucrowdgreedy',
-                'geotrucrowdhgr',
-                'geocrowdgreedy',
-                'geocrowdllep',
-                'geocrowdnnp',
-                'rdbscdivideandconquer',
-                'rdbscsampling'
-                ]
 
 
 class DBUtil:
@@ -158,7 +150,8 @@ class Measure:
             return 1
         # assume this worker gives a positive answer
         if neg_count < (len(workers) - 1) / 2:
-            answer += Measure.ars(workers, level + 1, confidence * (1 - workers[level].reliability), neg_count + 1, target)
+            answer += Measure.ars(workers, level + 1, confidence * (1 - workers[level].reliability), neg_count + 1,
+                                  target)
         return answer
 
     @staticmethod
@@ -283,7 +276,7 @@ def run_exp(distribution, instance_num=5, worker_per_instance=100, task_per_inst
 
     # statistics including number of assigned(finished) tasks, average moving distance, average workload, running time
     result = {}
-    for method in output_order:
+    for method in config.output_order:
         result[method] = Measure()
 
     tasks, workers = scawg_util.generate_general_task_and_worker([
@@ -347,7 +340,7 @@ def run_on_variable(distribution, variable_name, values):
         for value in values:
             ofile.write('\t' + str(value))
         ofile.write('\n')
-        for method in output_order:
+        for method in config.output_order:
             ofile.write(method)
             for value in values:
                 ofile.write('\t' + str(results[method][str(value)][measure]))
@@ -356,17 +349,17 @@ def run_on_variable(distribution, variable_name, values):
 
 
 def test():
-    global output_order
-    output_order = ['geotrucrowdgreedy',
-                    'geotrucrowdhgr',
-                    'geocrowdgreedy',
-                    'geocrowdllep',
-                    'geocrowdnnp',
-                    'rdbscdivideandconquer',
-                    'rdbscsampling'
-                    ]
+    config.output_order = ['geotrucrowdgreedy',
+                           'geotrucrowdhgr',
+                           'geocrowdgreedy',
+                           'geocrowdllep',
+                           'geocrowdnnp',
+                           'rdbscdivideandconquer',
+                           'rdbscsampling'
+                           ]
     # worker should be at least 2 times more than task
     run_on_variable('gaus', 'worker_per_instance', [300, 400, 500])
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -375,15 +368,15 @@ if __name__ == '__main__':
             test()
             draw_pic.main()
             exit()
-    distribution = ['unif', 'gaus']#, 'skew', 'zipf', 'real']
-    worker_per_instance = [100, 200, 300, 500]#[200, 400, 1000, 1600, 2000]#[25, 50, 125, 200, 250]
-    task_per_instance = [300, 500, 800, 1000]#[200, 400, 1000, 1600, 2000]#[25, 50, 125, 200, 250]
-    task_duration = [(1, 2), (2, 4), (4, 8)]#, (8, 12), (12, 16)]
-    task_requirement = [(1, 3), (3, 5), (5, 7)]#, (7, 9)]
-    task_confidence = [(0.75, 0.8), (0.8, 0.85), (0.85, 0.9)]#, (0.9, 0.95)]
-    worker_capacity = [(1, 3), (3, 5), (5, 7)]#, (7, 9)]
-    worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8)]#, (0.8, 0.85)]
-    working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2)]#, (0.2, 0.25)]
+    distribution = ['unif', 'gaus']  # , 'skew', 'zipf', 'real']
+    worker_per_instance = [100, 200, 300, 500]  # [200, 400, 1000, 1600, 2000]#[25, 50, 125, 200, 250]
+    task_per_instance = [300, 500, 800, 1000]  # [200, 400, 1000, 1600, 2000]#[25, 50, 125, 200, 250]
+    task_duration = [(1, 2), (2, 4), (4, 8)]  # , (8, 12), (12, 16)]
+    task_requirement = [(1, 3), (3, 5), (5, 7)]  # , (7, 9)]
+    task_confidence = [(0.75, 0.8), (0.8, 0.85), (0.85, 0.9)]  # , (0.9, 0.95)]
+    worker_capacity = [(1, 3), (3, 5), (5, 7)]  # , (7, 9)]
+    worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8)]  # , (0.8, 0.85)]
+    working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2)]  # , (0.2, 0.25)]
     measures = []
     for dist in distribution:
         if dist != 'real':

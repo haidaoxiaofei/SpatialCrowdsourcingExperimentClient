@@ -3,6 +3,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import savefig
 from os import listdir, path, mkdir
+import config
 
 __author__ = 'Jian Xun'
 
@@ -78,7 +79,7 @@ def draw(data, suffix):
     plots = []
     marker = 0
     plt.figure(figsize=(9, 9))
-    for label in data['lines']:
+    for label in config.output_order:
         p, = plt.plot(data['lines'][label], color='k', label=LABEL[label],
                       markerfacecolor='w', lineWidth=line_width, **markers[marker])
         plots.append(p)
