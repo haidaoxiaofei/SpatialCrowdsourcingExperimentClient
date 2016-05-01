@@ -158,6 +158,9 @@ class Measure:
 
     @staticmethod
     def satisfy_conf(task, workers):
+        # maximum possible worker num
+        if len(workers) >= 17:
+            return True
         return Measure.ars(workers, 0, 1, 0, task) >= task.confidence
 
     @staticmethod
