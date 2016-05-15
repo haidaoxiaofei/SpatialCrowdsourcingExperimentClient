@@ -2,7 +2,7 @@ import math
 import scawg_util
 import virtual_user
 import datetime
-from models import User, UserLastPosition, WorkerDetail, HitDetail, session, Message
+from models import User, UserLastPosition, WorkerDetail, HitDetail, session, Message, HIT
 import encoder
 import sys
 import draw_pic
@@ -75,6 +75,13 @@ class DBUtil:
     @classmethod
     def clear_message(cls):
         session.query(Message).delete()
+        session.commit()
+
+    @classmethod
+    def clear_hits(cls):
+        cls.clear_message()
+        session.query(HitDetail).delete()
+        session.query(HIT).delete()
         session.commit()
 
     @classmethod
@@ -271,7 +278,7 @@ def run_exp(distribution, instance_num=5, worker_per_instance=150, task_per_inst
 
     """
     DBUtil.initialize_db()
-    DBUtil.clear_message()
+    DBUtil.clear_hits()
     print 'db initialized'
 
     # initial boss
@@ -321,7 +328,7 @@ def run_exp(distribution, instance_num=5, worker_per_instance=150, task_per_inst
             offline_workers_batch(worker_ins)
         for i in xrange(instance_num):
             invalid_tasks_batch(tasks[i])
-        DBUtil.clear_message()
+        DBUtil.clear_hits()
 
     return result
 
@@ -373,14 +380,16 @@ if __name__ == '__main__':
             test()
             draw_pic.main()
             exit()
-    distribution = ['unif', 'gaus']  # , 'skew', 'zipf', 'real']
-    worker_per_instance = [150, 200, 250, 300]  # [200, 400, 1000, 1600, 2000]#[25, 50, 125, 200, 250]
-    task_per_instance = [150, 200, 250, 300]  # [200, 400, 1000, 1600, 2000]#[25, 50, 125, 200, 250]
-    task_duration = [(1, 2), (2, 4), (4, 8)]  # , (8, 12), (12, 16)]
+        elif arg == 'worker_select':
+            config.output_order = ['workerselectprogressive', 'workerselectdp', 'workerselectbb', 'workerselectha']
+    distribution = ['skew', 'gaus']  # , 'unif', 'zipf', 'real']
+    worker_per_instance = [150, 200, 250, 300]  # , 400, 500]
+    task_per_instance = [150, 200, 250, 300]  # , 400, 500]
+    task_duration = [(1, 2), (2, 4), (4, 6)]  # , (6, 8)]
     task_requirement = [(1, 3), (3, 5), (5, 7)]  # , (7, 9)]
-    task_confidence = [(0.75, 0.8), (0.8, 0.85), (0.85, 0.9)]  # , (0.9, 0.95)]
+    task_confidence = [(0.65, 0.7), (0.75, 0.8), (0.8, 0.85)]  # , (0.85, 0.9)]
     worker_capacity = [(1, 3), (3, 5), (5, 7)]  # , (7, 9)]
-    worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8)]  # , (0.8, 0.85)]
+    worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8)]  # , (0.8, 0.85), (0.85, 0.9)]
     working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2)]  # , (0.2, 0.25)]
     measures = []
     for dist in distribution:
