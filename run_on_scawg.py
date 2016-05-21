@@ -5,13 +5,24 @@ import datetime
 from models import User, UserLastPosition, WorkerDetail, HitDetail, session, Message, HIT
 import encoder
 import sys
-import draw_pic
+import logging
 import config
 
 __author__ = 'Jian Xun'
 
+logger = logging.getLogger('default')
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('default.log')
+formatter = logging.Formatter('%(asctime)s - %(module)s(%(filename)s:%(lineno)d) - %(levelname)s - %(message)s')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
 
 class DBUtil:
+    def __init__(self):
+        pass
+
     @classmethod
     def move_to(cls, uid, longitude, latitude):
         position = session.query(UserLastPosition).filter_by(user_id=uid).first()
@@ -87,12 +98,13 @@ class DBUtil:
     @classmethod
     def initialize_db(cls):
         user_num = session.query(User).count()
-        if user_num < 10000:
-            for i in xrange(user_num + 1, 10001):
+        if user_num < config.total_worker_num:
+            for i in xrange(user_num + 1, config.total_worker_num + 1):
                 u = User()
                 u.email = 'jianxuntest_' + str(i) + '@test.com'
                 u.username = 'jianxuntest_' + str(i)
-                u.password = '$6$rounds=625784$CWH2/L8e8Oswa6Ce$D6dTtMNbX8QI0Ff37IJy/SA0wszAweLxoEeq502gYmb2Fo9eRlCuQQsfmKzNBRmPkulik0.YjttczfRRjsTlh/'
+                u.password = '$6$rounds=625784$CWH2/L8e8Oswa6Ce$D6dTtMNbX8QI0Ff37IJy/SA0wszAweLxoEeq502gYmb2Fo9' \
+                             'eRlCuQQsfmKzNBRmPkulik0.YjttczfRRjsTlh/'
                 u.credit = 0
                 u.active = 1
                 session.add(u)
@@ -142,7 +154,7 @@ class Measure:
                 if wid not in self.assigned_workers:
                     self.assigned_workers[wid] = wid
                 if wid in self.task_worker[tid]:
-                    print '!!!!!!! duplicate assignment !!!!!!!'
+                    logger.error('!!!!!!! duplicate assignment !!!!!!!')
                 self.task_worker[tid].append(wid)
                 self.task_dic[tid].assigned += 1
                 self.total_moving_dis += Measure.moving_dis(self.task_dic[tid], self.worker_dic[wid])
@@ -197,25 +209,22 @@ class Measure:
         }
 
 
-# worker id is from 1 to 1000
-total_worker_num = 10000
 # maps scawg id to gmission id (the same as index of vworkers)
 worker_dic = {}
 worker_used = 0
 
 
 def get_id(scawg_id):
-    global total_worker_num
     global worker_dic
     global worker_used
     if str(scawg_id) in worker_dic:
         return worker_dic[str(scawg_id)]
-    elif worker_used < total_worker_num:
+    elif worker_used < config.total_worker_num:
         worker_used += 1
         worker_dic[str(scawg_id)] = worker_used
         return worker_used
     else:
-        print 'too many users!'
+        logger.error('too many users!')
         return None
 
 
@@ -254,32 +263,28 @@ def invalid_tasks_batch(tasks):
         DBUtil.set_hit_attributes(hid=task.id, is_valid=False)
 
 
-# todo set default values
-def run_exp(distribution, instance_num=5, worker_per_instance=150, task_per_instance=150, task_duration=(1, 2),
-            task_requirement=(1, 3), task_confidence=(0.75, 0.8), worker_capacity=(1, 3),
+def run_exp(distribution, instance_num=config.default_instance_num,
+            worker_per_instance=config.default_worker_per_instance, task_per_instance=config.default_task_per_instance,
+            task_duration=(1, 2), task_requirement=(1, 3), task_confidence=(0.75, 0.8), worker_capacity=(1, 3),
             worker_reliability=(0.75, 0.8), working_side_length=(0.05, 0.1)):
     """
     run experiment and return the result
-    Parameters
-    ----------
-    distribution : str
-    instance_num : int
-    worker_per_instance : int
-    task_per_instance : int
-    task_duration : tuple
-    task_requirement : tuple
-    task_confidence : tuple
-    worker_capacity : tuple
-    worker_reliability : tuple
-    working_side_length : tuple
-
-    Returns
-    -------
-
+    :type distribution: str
+    :type instance_num: int
+    :type worker_per_instance: int
+    :type task_per_instance: int
+    :type task_duration: tuple
+    :type task_requirement: tuple
+    :type task_confidence: tuple
+    :type worker_capacity: tuple
+    :type worker_reliability: tuple
+    :type working_side_length: tuple
+    :return:
     """
+
     DBUtil.initialize_db()
     DBUtil.clear_hits()
-    print 'db initialized'
+    logger.info('db initialized')
 
     # initial boss
     boss = virtual_user.Boss('jianxuntest_boss', 'PaSSwoRd', 'jianxuntest_boss@test.com')
@@ -310,21 +315,22 @@ def run_exp(distribution, instance_num=5, worker_per_instance=150, task_per_inst
         'min_working_side_length=' + str(working_side_length[0]),
         'max_working_side_length=' + str(working_side_length[1])
     ])
-    print 'data generated'
+    logger.info('data generated')
 
     # test on each method in result
     for method in result:
-        print method
+        logger.info('starting run ' + method)
         for i in xrange(instance_num):
             worker_ins = workers[i]
             task_ins = tasks[i]
             set_worker_attributes_batch(worker_ins)
             set_task_attributes_batch(task_ins, boss)
-
+            logger.info('assign ' + method)
             assign = encoder.encode(boss.assign(method, i))['result']
             # print isinstance(assign, list), isinstance(assign, dict), isinstance(assign, str)
-            # print assign
+            logger.info('add result of ' + method)
             result[method].add_result(assign, task_ins, worker_ins)
+            logger.info('finished adding result')
             offline_workers_batch(worker_ins)
         for i in xrange(instance_num):
             invalid_tasks_batch(tasks[i])
@@ -361,44 +367,34 @@ def run_on_variable(distribution, variable_name, values):
 
 
 def test():
-    config.output_order = ['geotrucrowdgreedy',
-                           'geotrucrowdhgr',
-                           'geocrowdgreedy',
-                           'geocrowdllep',
-                           'geocrowdnnp',
-                           'rdbscdivideandconquer',
-                           'rdbscsampling'
-                           ]
+    config.change_to('worker_select')
     # worker should be at least 2 times more than task
-    run_on_variable('gaus', 'worker_per_instance', [300, 400, 500])
+    run_on_variable('skew', 'worker_per_instance', config.worker_per_instance)
+    run_on_variable('skew', 'task_per_instance', config.task_per_instance)
 
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         arg = sys.argv[1]
         if arg == 'test':
+            logger.info('test mode')
             test()
-            draw_pic.main()
             exit()
         elif arg == 'worker_select':
-            config.output_order = ['workerselectprogressive', 'workerselectdp', 'workerselectbb', 'workerselectha']
-    distribution = ['skew', 'gaus']  # , 'unif', 'zipf', 'real']
-    worker_per_instance = [150, 200, 250, 300]  # , 400, 500]
-    task_per_instance = [150, 200, 250, 300]  # , 400, 500]
-    task_duration = [(1, 2), (2, 4), (4, 6)]  # , (6, 8)]
-    task_requirement = [(1, 3), (3, 5), (5, 7)]  # , (7, 9)]
-    task_confidence = [(0.65, 0.7), (0.75, 0.8), (0.8, 0.85)]  # , (0.85, 0.9)]
-    worker_capacity = [(1, 3), (3, 5), (5, 7)]  # , (7, 9)]
-    worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8)]  # , (0.8, 0.85), (0.85, 0.9)]
-    working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2)]  # , (0.2, 0.25)]
-    measures = []
-    for dist in distribution:
+            logger.info('worker-selected mode')
+            config.change_to('worker_select')
+        elif arg == 'server_assign':
+            logger.info('server-assigned mode')
+        else:
+            exit()
+
+    for dist in config.distribution:
         if dist != 'real':
-            run_on_variable(dist, 'worker_per_instance', worker_per_instance)
-        run_on_variable(dist, 'task_per_instance', task_per_instance)
-        run_on_variable(dist, 'task_duration', task_duration)
-        run_on_variable(dist, 'task_requirement', task_requirement)
-        run_on_variable(dist, 'task_confidence', task_confidence)
-        run_on_variable(dist, 'worker_capacity', worker_capacity)
-        run_on_variable(dist, 'worker_reliability', worker_reliability)
-        run_on_variable(dist, 'working_side_length', working_side_length)
+            run_on_variable(dist, 'worker_per_instance', config.worker_per_instance)
+            run_on_variable(dist, 'task_per_instance', config.task_per_instance)
+        run_on_variable(dist, 'task_duration', config.task_duration)
+        run_on_variable(dist, 'task_requirement', config.task_requirement)
+        run_on_variable(dist, 'task_confidence', config.task_confidence)
+        run_on_variable(dist, 'worker_capacity', config.worker_capacity)
+        run_on_variable(dist, 'worker_reliability', config.worker_reliability)
+        run_on_variable(dist, 'working_side_length', config.working_side_length)

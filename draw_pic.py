@@ -3,7 +3,22 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import savefig
 from os import listdir, path, mkdir
-import config
+import sys
+
+output_order = ['geotrucrowdgreedy',
+                'geotrucrowdhgr',
+                'geocrowdgreedy',
+                'geocrowdllep',
+                'geocrowdnnp',
+                'rdbscdivideandconquer',
+                'rdbscsampling'
+                ]
+
+output_order_ws = ['workerselectprogressive',
+                   'workerselectdp',
+                   'workerselectbb',
+                   'workerselectha'
+                   ]
 
 __author__ = 'Jian Xun'
 
@@ -15,7 +30,11 @@ LABEL = {
     'geotrucrowdlo': 'GT-lo',
     'geotrucrowdhgr': 'GT-HGR',
     'rdbscsampling': 'RDB-sam',
-    'rdbscdivideandconquer': 'RDB-d&c'
+    'rdbscdivideandconquer': 'RDB-d&c',
+    'workerselectprogressive': 'PRS',
+    'workerselectdp': 'DP',
+    'workerselectbb': 'BB',
+    'workerselectha': 'HA'
 }
 
 
@@ -79,7 +98,7 @@ def draw(data, suffix):
     plots = []
     marker = 0
     plt.figure(figsize=(9, 9))
-    for label in config.output_order:
+    for label in output_order:
         p, = plt.plot(data['lines'][label], color='k', label=LABEL[label],
                       markerfacecolor='w', lineWidth=line_width, **markers[marker])
         plots.append(p)
@@ -105,4 +124,8 @@ def main():
                     draw(data, 'eps')
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        arg = sys.argv[1]
+        if arg == 'worker_select':
+            output_order = output_order_ws
     main()
