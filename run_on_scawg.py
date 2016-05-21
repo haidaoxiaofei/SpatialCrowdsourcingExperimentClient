@@ -2,7 +2,7 @@ import math
 import scawg_util
 import virtual_user
 import datetime
-from models import User, UserLastPosition, WorkerDetail, HitDetail, session, Message, HIT
+from models import *
 import encoder
 import sys
 import logging
@@ -24,7 +24,7 @@ class DBUtil:
         pass
 
     @classmethod
-    def move_to(cls, uid, longitude, latitude):
+    def move_to(cls, uid, longitude, latitude, commit=True):
         position = session.query(UserLastPosition).filter_by(user_id=uid).first()
         if position is not None:
             position.longitude = longitude
@@ -35,11 +35,13 @@ class DBUtil:
             position.longitude = longitude
             position.latitude = latitude
             session.add(position)
-        session.commit()
+        if commit:
+            session.commit()
 
     @classmethod
     def set_worker_attributes(cls, uid, capacity=None, reliability=None, min_direction=None, max_direction=None,
-                              velocity=None, min_lon=None, min_lat=None, max_lon=None, max_lat=None, is_online=None):
+                              velocity=None, min_lon=None, min_lat=None, max_lon=None, max_lat=None, is_online=None,
+                              commit=True):
         user_detail = session.query(WorkerDetail).filter_by(id=uid).first()
         if user_detail is None:
             # print uid, 'not found'
@@ -66,10 +68,51 @@ class DBUtil:
             user_detail.region_max_lat = max_lat
         if is_online is not None:
             user_detail.is_online = is_online
-        session.commit()
+        if commit:
+            session.commit()
 
     @classmethod
-    def set_hit_attributes(cls, hid, entropy=None, confidence=None, is_valid=None):
+    def create_hit(cls, longitude, latitude, arrival_time, expire_time, require_answer_count, entropy, confidence,
+                   is_valid=None, commit=True):
+        # add coordinate
+        coord = Coordinate()
+        coord.longitude = longitude
+        coord.latitude = latitude
+        coord.altitude = 0
+        session.add(coord)
+        session.flush()
+        session.refresh(coord)
+        # add location
+        location = Location()
+        location.coordinate_id = coord.id
+        location.name = 'jianxuntest_' + str(coord.id)
+        session.add(location)
+        session.flush()
+        session.refresh(location)
+        # add hit
+        hit = HIT()
+        hit.type = 'text'
+        hit.title = 'jianxuntest_' + str(location.id)
+        hit.description = 'desc desc'
+        hit.campaign_id = 1
+        hit.credit = 10
+        hit.status = 'open'
+        hit.required_answer_count = require_answer_count
+        hit.min_selection_count = 1
+        hit.max_selection_count = 1
+        hit.begin_time = arrival_time
+        hit.end_time = expire_time
+        hit.location_id = location.id
+        hit.requester_id = 10001
+        session.add(hit)
+        session.flush()
+        session.refresh(hit)
+        # set attributes
+        DBUtil.set_hit_attributes(hit.id, entropy, confidence, is_valid, commit)
+        return hit.id
+
+    @classmethod
+    def set_hit_attributes(cls, hid, entropy=None, confidence=None, is_valid=None, commit=True):
         hit_detail = session.query(HitDetail).filter_by(id=hid).first()
         if hit_detail is None:
             hit_detail = HitDetail()
@@ -81,7 +124,8 @@ class DBUtil:
             hit_detail.confidence = confidence
         if is_valid is not None:
             hit_detail.is_valid = is_valid
-        session.commit()
+        if commit:
+            session.commit()
 
     @classmethod
     def clear_message(cls):
@@ -231,30 +275,33 @@ def get_id(scawg_id):
 def set_worker_attributes_batch(workers):
     for worker in workers:
         real_id = get_id(worker.id)
-        DBUtil.move_to(real_id, worker.longitude, worker.latitude)
+        DBUtil.move_to(real_id, worker.longitude, worker.latitude, commit=False)
         DBUtil.set_worker_attributes(uid=real_id, capacity=worker.capacity, reliability=worker.reliability,
                                      min_lon=worker.min_lon, min_lat=worker.min_lat, max_lon=worker.max_lon,
                                      max_lat=worker.max_lat, velocity=worker.velocity,
                                      min_direction=worker.min_direction, max_direction=worker.max_direction,
-                                     is_online=True)
+                                     is_online=True, commit=False)
+        session.commit()
 
 
 def offline_workers_batch(workers):
     for worker in workers:
         real_id = get_id(worker.id)
-        DBUtil.set_worker_attributes(uid=real_id, is_online=False)
+        DBUtil.set_worker_attributes(uid=real_id, is_online=False, commit=False)
+    session.commit()
 
 
 def set_task_attributes_batch(tasks, boss):
     for task in tasks:
         # print 'task ' + str(i)
-        location_id = boss.create_location(task.longitude, task.latitude)
+        # location_id = boss.create_location(task.longitude, task.latitude)
         arrival_time = datetime.datetime.fromtimestamp(task.arrival_time).isoformat()
         expire_time = datetime.datetime.fromtimestamp(task.expire_time).isoformat()
-        hit_id = boss.create_hit(location_id, required_answer_count=task.require_answer_count,
-                                 arrival_time=arrival_time, expire_time=expire_time)
-        # print hit_id
-        DBUtil.set_hit_attributes(hid=hit_id, entropy=task.entropy, confidence=task.confidence, is_valid=True)
+        # hit_id = boss.create_hit(location_id, required_answer_count=task.require_answer_count,
+        #                          arrival_time=arrival_time, expire_time=expire_time)
+        # DBUtil.set_hit_attributes(hid=hit_id, entropy=task.entropy, confidence=task.confidence, is_valid=True)
+        hit_id = DBUtil.create_hit(task.longitude, task.latitude, arrival_time, expire_time, task.require_answer_count,
+                                   task.entropy, task.confidence, is_valid=True, commit=False)
         task.id = hit_id
 
 
@@ -323,15 +370,18 @@ def run_exp(distribution, instance_num=config.default_instance_num,
         for i in xrange(instance_num):
             worker_ins = workers[i]
             task_ins = tasks[i]
+            logger.info('set worker attributes')
             set_worker_attributes_batch(worker_ins)
+            logger.info('set task attributes')
             set_task_attributes_batch(task_ins, boss)
             logger.info('assign ' + method)
             assign = encoder.encode(boss.assign(method, i))['result']
             # print isinstance(assign, list), isinstance(assign, dict), isinstance(assign, str)
             logger.info('add result of ' + method)
             result[method].add_result(assign, task_ins, worker_ins)
-            logger.info('finished adding result')
+            logger.info('finished adding result, starting offline workers')
             offline_workers_batch(worker_ins)
+            logger.info('finished offline workers')
         for i in xrange(instance_num):
             invalid_tasks_batch(tasks[i])
         DBUtil.clear_hits()

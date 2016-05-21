@@ -61,9 +61,9 @@ class HIT(Base):
     title = Column(String(500))
     description = Column(TEXT)
 
-    attachment_id = Column(Integer, ForeignKey('attachment.id'))
+    attachment_id = Column(Integer)
 
-    campaign_id = Column(Integer, ForeignKey('campaign.id'))
+    campaign_id = Column(Integer)
 
     credit = Column(Integer, default=10)
     status = Column(String(20), default='open')  # or closed
@@ -107,3 +107,24 @@ class Message(Base):
     status = Column(String(20), default='new', nullable=False)  # delivered, read
 
     created_on = Column(DateTime, default=datetime.datetime.now, nullable=False)
+
+
+class Location(Base):
+    __tablename__ = 'location'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(200), nullable=False)
+
+    coordinate_id = Column(Integer, ForeignKey('coordinate.id'))
+
+    created_on = Column(DateTime, default=datetime.datetime.now)
+
+
+class Coordinate(Base):
+    __tablename__ = 'coordinate'
+    id = Column(Integer, primary_key=True)
+
+    longitude = Column(REAL, nullable=False)  # x
+    latitude = Column(REAL, nullable=False)  # y
+    altitude = Column(REAL, nullable=False)  # y
+
+    created_on = Column(DateTime, default=datetime.datetime.now)
