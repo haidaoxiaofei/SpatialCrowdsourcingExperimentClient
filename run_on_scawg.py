@@ -382,6 +382,7 @@ def run_exp(distribution, instance_num=config.default_instance_num,
             logger.info('finished adding result, starting offline workers')
             offline_workers_batch(worker_ins)
             logger.info('finished offline workers')
+        logger.info(method + ' done, clearing')
         for i in xrange(instance_num):
             invalid_tasks_batch(tasks[i])
         DBUtil.clear_hits()
@@ -393,7 +394,13 @@ def run_on_variable(distribution, variable_name, values):
     measures = []
     results = {}
     for value in values:
-        temp = eval('run_exp(\'' + distribution + '\', ' + variable_name + '=' + str(value) + ')')
+        kwargs = {
+            'instance_num': config.default_instance_num,
+            'worker_per_instance': config.default_worker_per_instance,
+            'task_per_instance': config.default_task_per_instance
+        }
+        kwargs[variable_name] = value
+        temp = run_exp(distribution, **kwargs)
         for method in temp:
             if method not in results:
                 results[method] = {}
@@ -418,6 +425,10 @@ def run_on_variable(distribution, variable_name, values):
 
 def test():
     config.change_to('worker_select')
+    # print config.output_order
+    # print config.default_instance_num
+    # print config.default_task_per_instance
+    # print config.default_worker_per_instance
     # worker should be at least 2 times more than task
     run_on_variable('skew', 'worker_per_instance', config.worker_per_instance)
     run_on_variable('skew', 'task_per_instance', config.task_per_instance)
