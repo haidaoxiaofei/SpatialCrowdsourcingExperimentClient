@@ -1,7 +1,6 @@
 import math
 import scawg_util
 import virtual_user
-import datetime
 from models import *
 import encoder
 import sys
@@ -281,7 +280,7 @@ def set_worker_attributes_batch(workers):
                                      max_lat=worker.max_lat, velocity=worker.velocity,
                                      min_direction=worker.min_direction, max_direction=worker.max_direction,
                                      is_online=True, commit=False)
-        session.commit()
+    session.commit()
 
 
 def offline_workers_batch(workers):
@@ -291,7 +290,7 @@ def offline_workers_batch(workers):
     session.commit()
 
 
-def set_task_attributes_batch(tasks, boss):
+def set_task_attributes_batch(tasks):
     for task in tasks:
         # print 'task ' + str(i)
         # location_id = boss.create_location(task.longitude, task.latitude)
@@ -310,8 +309,7 @@ def invalid_tasks_batch(tasks):
         DBUtil.set_hit_attributes(hid=task.id, is_valid=False)
 
 
-def run_exp(distribution, instance_num=config.default_instance_num,
-            worker_per_instance=config.default_worker_per_instance, task_per_instance=config.default_task_per_instance,
+def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_instance=None,
             task_duration=(1, 2), task_requirement=(1, 3), task_confidence=(0.75, 0.8), worker_capacity=(1, 3),
             worker_reliability=(0.75, 0.8), working_side_length=(0.05, 0.1)):
     """
@@ -373,7 +371,7 @@ def run_exp(distribution, instance_num=config.default_instance_num,
             logger.info('set worker attributes')
             set_worker_attributes_batch(worker_ins)
             logger.info('set task attributes')
-            set_task_attributes_batch(task_ins, boss)
+            set_task_attributes_batch(task_ins)
             logger.info('assign ' + method)
             assign = encoder.encode(boss.assign(method, i))['result']
             # print isinstance(assign, list), isinstance(assign, dict), isinstance(assign, str)
