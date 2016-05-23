@@ -4,8 +4,13 @@ import random
 import string
 from gmission import *
 from requests.exceptions import HTTPError
+import requests
 
 __author__ = 'JIAN Xun'
+
+INDEX_HOST = 'http://127.0.0.1:8081/'
+if sysstr == 'Darwin':
+    INDEX_HOST = 'http://192.168.99.100:8081/'
 
 
 def randstr():
@@ -132,3 +137,20 @@ class Boss:
             Current time instance, 0 means 1970-01-01 08:00:00
         """
         return post(self.__client.api_host + 'assignment', json={'method': method, 'time': current_time + 28800})
+
+    def assign_batch(self, method):
+        """
+        Assign tasks to workers using one of the algorithms.
+        Parameters
+        ----------
+        method : str
+            The name of the method to use, should be on of ['geocrowdgreedy', 'geocrowdllep', 'geocrowdnnp',
+             'geotrucrowdgreedy', 'geotrucrowdlo', 'rdbscdivideandconquer', 'rdbscsampling']
+        current_time : int
+            Current time instance, 0 means 1970-01-01 08:00:00
+        """
+        headers = {'content-type': 'application/json', 'accept': 'application/json'}
+        matches = requests.post(
+            url=INDEX_HOST + '/Index/actions/assignment/' + method + '/batch',
+            headers=headers).json()
+        return matches

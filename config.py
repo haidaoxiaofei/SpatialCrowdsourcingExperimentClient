@@ -15,7 +15,7 @@ output_order_worker_select = ['workerselectprogressive',
                               'workerselectha'
                               ]
 
-total_worker_num = 10000
+# total_worker_num = 100000
 distribution = ['skew', 'gaus', 'real']
 worker_per_instance = [150, 200, 250, 300, 400, 500]
 worker_per_instance_worker_select = [300, 400, 500]
