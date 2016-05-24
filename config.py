@@ -43,10 +43,10 @@ default_setting_worker_select = {
     'instance_num': 20,
     'worker_per_instance': 300,
     'task_per_instance': 300,
-    'task_duration': (4, 6),
+    'task_duration': (2, 4),
     'task_requirement': (3, 5),
     'task_confidence': (0.75, 0.8),
-    'worker_capacity': (5, 7),
+    'worker_capacity': (3, 5),
     'worker_reliability': (0.75, 0.8),
     'working_side_length': (0.1, 0.15)
 }
