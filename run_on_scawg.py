@@ -1,6 +1,6 @@
 import math
 import scawg_util
-import virtual_user
+import index_server_client
 from models import *
 import encoder
 import sys
@@ -233,7 +233,7 @@ def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_
     logger.info('db initialized')
 
     # initial boss
-    boss = virtual_user.Boss('jianxuntest_boss', 'PaSSwoRd', 'jianxuntest_boss@test.com')
+    # boss = virtual_user.Boss('jianxuntest_boss', 'PaSSwoRd', 'jianxuntest_boss@test.com')
 
     # instance_num = 2
 
@@ -273,7 +273,7 @@ def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_
     # test on each method in result
     for method in result:
         logger.info('assign ' + method)
-        assign = encoder.encode(boss.assign_batch(method))
+        assign = encoder.encode(index_server_client.assign_batch(method))
         # print isinstance(assign, list), isinstance(assign, dict), isinstance(assign, str)
         logger.info('add result of ' + method)
         result[method].add_result(assign, tasks, workers)
