@@ -39,17 +39,17 @@ default_setting = {
 }
 
 
-worker_per_instance_worker_select = [200, 250, 300, 350, 400]
-task_per_instance_worker_select = [200, 250, 300, 350, 400]
-task_duration_worker_select = [(2, 3), (3, 4), (4, 5), (5, 6)]
+worker_per_instance_worker_select = [100, 150, 200, 250, 300]
+task_per_instance_worker_select = [100, 150, 200, 250, 300]
+task_duration_worker_select = [(1, 2), (2, 3), (3, 4), (4, 5)]
 worker_capacity_worker_select = [(2, 3), (3, 4), (4, 5), (5, 6)]
 
 
 default_setting_worker_select = {
-    'instance_num': 20,
-    'worker_per_instance': 200,
-    'task_per_instance': 200,
-    'task_duration': (2, 3),
+    'instance_num': 100,
+    'worker_per_instance': 100,
+    'task_per_instance': 100,
+    'task_duration': (1, 2),
     'task_requirement': (3, 5),
     'task_confidence': (0.75, 0.8),
     'worker_capacity': (2, 3),
