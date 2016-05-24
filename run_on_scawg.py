@@ -287,11 +287,7 @@ def run_on_variable(distribution, variable_name, values):
     measures = []
     results = {}
     for value in values:
-        kwargs = {
-            'instance_num': config.default_instance_num,
-            'worker_per_instance': config.default_worker_per_instance,
-            'task_per_instance': config.default_task_per_instance
-        }
+        kwargs = config.get_default()
         kwargs[variable_name] = value
         temp = run_exp(distribution, **kwargs)
         for method in temp:
@@ -318,11 +314,6 @@ def run_on_variable(distribution, variable_name, values):
 
 def test():
     config.change_to('worker_select')
-    # print config.output_order
-    # print config.default_instance_num
-    # print config.default_task_per_instance
-    # print config.default_worker_per_instance
-    # worker should be at least 2 times more than task
     run_on_variable('skew', 'worker_per_instance', config.worker_per_instance)
     run_on_variable('skew', 'task_per_instance', config.task_per_instance)
 
