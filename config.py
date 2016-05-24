@@ -60,6 +60,8 @@ def change_to(category):
         worker_per_instance = worker_per_instance_worker_select
         global task_per_instance
         task_per_instance = task_per_instance_worker_select
+        global output_order
+        output_order = output_order_worker_select
 
 
 def get_default():
