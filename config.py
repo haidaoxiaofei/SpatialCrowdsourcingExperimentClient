@@ -22,6 +22,7 @@ worker_per_instance_worker_select = [300, 350, 400, 450, 500]
 task_per_instance = [150, 200, 250, 300, 400, 500]
 task_per_instance_worker_select = [300, 350, 400, 450, 500]
 task_duration = [(1, 2), (2, 4), (4, 6), (6, 8)]
+task_duration_worker_select = [(2, 3), (3, 4), (4, 5), (5, 6)]
 task_requirement = [(1, 3), (3, 5), (5, 7), (7, 9)]
 task_confidence = [(0.65, 0.7), (0.75, 0.8), (0.8, 0.85), (0.85, 0.9)]
 worker_capacity = [(1, 3), (3, 5), (5, 7), (7, 9)]
@@ -43,10 +44,10 @@ default_setting_worker_select = {
     'instance_num': 20,
     'worker_per_instance': 300,
     'task_per_instance': 300,
-    'task_duration': (2, 4),
+    'task_duration': (2, 3),
     'task_requirement': (3, 5),
     'task_confidence': (0.75, 0.8),
-    'worker_capacity': (1, 3),
+    'worker_capacity': (3, 5),
     'worker_reliability': (0.75, 0.8),
     'working_side_length': (0.1, 0.15)
 }
@@ -62,6 +63,8 @@ def change_to(category):
         task_per_instance = task_per_instance_worker_select
         global output_order
         output_order = output_order_worker_select
+        global task_duration
+        task_duration = task_duration_worker_select
 
 
 def get_default():
