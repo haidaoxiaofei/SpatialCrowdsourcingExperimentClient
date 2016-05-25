@@ -15,6 +15,15 @@ output_order_worker_select = ['workerselectprogressive',
                               'workerselectha'
                               ]
 
+output_order_worker_select = ['geotrucrowdgreedy',
+                              'geotrucrowdhgr',
+                              'geocrowdgreedy',
+                              'geocrowdllep',
+                              'geocrowdnnp',
+                              'rdbscdivideandconquer',
+                              'rdbscsampling'
+                              ]
+
 # total_worker_num = 100000
 distribution = ['skew', 'gaus']  # , 'real']
 worker_per_instance = [150, 200, 250, 300, 400, 500]
@@ -38,12 +47,10 @@ default_setting = {
     'working_side_length': (0.05, 0.1)
 }
 
-
 worker_per_instance_worker_select = [150, 200, 250, 300, 350]
 task_per_instance_worker_select = [150, 200, 250, 300, 350]
 task_duration_worker_select = [(1, 2), (2, 3), (3, 4), (4, 5)]
 worker_capacity_worker_select = [(2, 3), (3, 4), (4, 5), (5, 6)]
-
 
 default_setting_worker_select = {
     'instance_num': 100,
@@ -60,14 +67,14 @@ default_setting_worker_select = {
 
 def change_to(category):
     if category == 'worker_select':
+        global output_order
+        output_order = output_order_worker_select
         global default_setting
         default_setting = default_setting_worker_select
         global worker_per_instance
         worker_per_instance = worker_per_instance_worker_select
         global task_per_instance
         task_per_instance = task_per_instance_worker_select
-        global output_order
-        output_order = output_order_worker_select
         global task_duration
         task_duration = task_duration_worker_select
         global worker_capacity
