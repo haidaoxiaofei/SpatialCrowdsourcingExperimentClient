@@ -190,7 +190,7 @@ def get_id(scawg_id):
         return worker_used
 
 
-def set_worker_attributes_batch(workers, time):
+def set_worker_attributes_batch(workers, time, commit=True):
     for worker in workers:
         real_id = get_id(worker.id)
         DBUtil.set_worker_attributes(uid=real_id, longitude=worker.longitude, latitude=worker.latitude,
@@ -199,15 +199,18 @@ def set_worker_attributes_batch(workers, time):
                                      max_lat=worker.max_lat, velocity=worker.velocity,
                                      min_direction=worker.min_direction, max_direction=worker.max_direction,
                                      is_online=time, commit=False)
-    session.commit()
+    if commit:
+        session.commit()
 
 
-def set_task_attributes_batch(tasks, time):
+def set_task_attributes_batch(tasks, time, commit=True):
     for task in tasks:
         hit_id = DBUtil.create_hit(task.longitude, task.latitude, task.arrival_time, task.expire_time,
                                    task.require_answer_count,
                                    task.entropy, task.confidence, is_valid=time, commit=False)
         task.id = hit_id
+    if commit:
+        session.commit()
 
 
 def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_instance=None,
@@ -267,8 +270,9 @@ def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_
     for i in xrange(instance_num):
         worker_ins = workers[i]
         task_ins = tasks[i]
-        set_worker_attributes_batch(worker_ins, i)
-        set_task_attributes_batch(task_ins, i)
+        set_worker_attributes_batch(worker_ins, i, False)
+        set_task_attributes_batch(task_ins, i, False)
+    session.commit()
 
     # test on each method in result
     for method in result:
