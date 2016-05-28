@@ -176,7 +176,11 @@ def clear_dir():
     if 'uni' in files:
         rmtree('./dataset/uni')
     if 'real' in files:
-        rmtree('./dataset/real')
+        _files = listdir('./dataset/real')
+        if 'task' in _files:
+            rmtree('./dataset/real/task')
+        if 'worker' in _files:
+            rmtree('./dataset/real/task')
     files = listdir('./res')
     if 'dataset' in files:
         rmtree('./res/dataset')
