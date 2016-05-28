@@ -180,7 +180,7 @@ def clear_dir():
         if 'task' in _files:
             rmtree('./dataset/real/task')
         if 'worker' in _files:
-            rmtree('./dataset/real/task')
+            rmtree('./dataset/real/worker')
     files = listdir('./res')
     if 'dataset' in files:
         rmtree('./res/dataset')
