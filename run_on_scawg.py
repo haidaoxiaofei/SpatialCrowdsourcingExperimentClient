@@ -167,6 +167,8 @@ class Measure:
             'finished_task_num_conf': finished_conf,
             'average_moving_dis':
                 0 if len(self.assigned_workers) == 0 else self.total_moving_dis / len(self.assigned_workers),
+            'average_moving_distance_per_WT_pair':
+                0 if self.total_assignment == 0 else self.total_moving_dis / self.total_assignment,
             'average_workload':
                 0 if len(self.assigned_workers) == 0 else (self.total_assignment + 0.0) / len(self.assigned_workers),
             'total_assignment': self.total_assignment,
@@ -245,6 +247,9 @@ def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_
     for method in config.output_order:
         result[method] = Measure()
 
+    if distribution == 'real':
+        instance_num = 20
+
     tasks, workers = scawg_util.generate_general_task_and_worker([
         distribution,
         'general',
@@ -277,6 +282,8 @@ def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_
     # test on each method in result
     for method in result:
         logger.info('assign ' + method)
+        if method == 'workerselectprogressive' and distribution == 'real' and task_duration[0] == 4:
+            continue
         assign = encoder.encode(index_server_client.assign_batch(method))
         # print isinstance(assign, list), isinstance(assign, dict), isinstance(assign, str)
         logger.info('add result of ' + method)
