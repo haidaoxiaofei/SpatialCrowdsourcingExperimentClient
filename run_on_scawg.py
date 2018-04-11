@@ -247,6 +247,8 @@ def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_
     for method in config.output_order:
         result[method] = Measure()
 
+    if distribution != 'unif':
+        result = {'workerselectbb': Measure()}
     if distribution == 'real':
         instance_num = 20
 
@@ -295,6 +297,7 @@ def run_exp(distribution, instance_num=None, worker_per_instance=None, task_per_
 
 
 def run_on_variable(distribution, variable_name, values):
+
     measures = []
     results = {}
     for value in values:
@@ -316,6 +319,8 @@ def run_on_variable(distribution, variable_name, values):
             ofile.write('\t' + str(value))
         ofile.write('\n')
         for method in config.output_order:
+            if method not in results:
+                continue
             ofile.write(method)
             for value in values:
                 ofile.write('\t' + str(results[method][str(value)][measure]))

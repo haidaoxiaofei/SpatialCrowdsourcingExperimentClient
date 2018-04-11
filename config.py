@@ -36,7 +36,7 @@ worker_reliability = [(0.65, 0.7), (0.7, 0.75), (0.75, 0.8), (0.8, 0.85), (0.85,
 working_side_length = [(0.05, 0.1), (0.1, 0.15), (0.15, 0.2), (0.2, 0.25)]
 
 default_setting = {
-    'instance_num': 20,
+    'instance_num': 50,
     'worker_per_instance': 150,
     'task_per_instance': 150,
     'task_duration': (1, 2),
@@ -48,7 +48,7 @@ default_setting = {
 }
 
 default_setting_worker_select = {
-    'instance_num': 20,
+    'instance_num': 50,
     'worker_per_instance': 150,
     'task_per_instance': 150,
     'task_duration': (1, 2),

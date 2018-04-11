@@ -56,6 +56,6 @@ if __name__ == '__main__':
     for i in range(1):
         location = randpos()
         location = {'longitude': 108.51234122809373, 'latitude': 18.84522971933864}
-        print location
+        # print location
         location_id = boss.create_location(location['longitude'], location['latitude'])
         boss.create_hit(location_id)

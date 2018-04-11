@@ -1,14 +1,22 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+replace_jar.sh
 
 # C extensions
 *.so
 
+*.tar
+*.csv
 # Distribution / packaging
 .Python
+samples/
+venv/
+pics/
+csv/
 env/
 build/
+dataset/
 develop-eggs/
 dist/
 downloads/
@@ -16,6 +24,7 @@ eggs/
 parts/
 sdist/
 var/
+.idea/
 *.egg-info/
 .installed.cfg
 *.egg
